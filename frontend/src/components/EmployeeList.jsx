@@ -3,15 +3,26 @@ import React, { useEffect, useState } from "react";
 import { getEmployees, deleteEmployee } from "../services/api";
 import { toast } from "react-toastify";
 
-import { Box, Paper, Typography, CircularProgress, IconButton } from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
+import {
+  Box,
+  Paper,
+  Typography,
+  CircularProgress,
+  IconButton,
+  useTheme,
+  useMediaQuery
+} from "@mui/material";
 
+import { DataGrid } from "@mui/x-data-grid";
 import DeleteIcon from "@mui/icons-material/Delete";
 
 function EmployeeList({ refreshFlag }) {
 
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const loadEmployees = async () => {
 
@@ -31,7 +42,7 @@ function EmployeeList({ refreshFlag }) {
 
       setEmployees(rows);
 
-    } catch (error) {
+    } catch {
 
       toast.error("Failed to load employees");
 
@@ -75,34 +86,35 @@ function EmployeeList({ refreshFlag }) {
       field: "employeeId",
       headerName: "Employee ID",
       flex: 1,
-      sortable: true
+      minWidth: 120
     },
 
     {
       field: "fullName",
       headerName: "Name",
       flex: 1,
-      sortable: true
+      minWidth: 150
     },
 
     {
       field: "email",
       headerName: "Email",
       flex: 1.5,
-      sortable: true
+      minWidth: 200
     },
 
     {
       field: "department",
       headerName: "Department",
       flex: 1,
-      sortable: true
+      minWidth: 140
     },
 
     {
       field: "action",
       headerName: "Action",
       sortable: false,
+      minWidth: 100,
       renderCell: (params) => (
 
         <IconButton
@@ -127,15 +139,29 @@ function EmployeeList({ refreshFlag }) {
 
   return (
 
-    <Paper elevation={3} sx={{ padding: 3 }}>
+    <Paper
+      elevation={3}
+      sx={{
+        padding: { xs: 2, md: 3 },
+        overflowX: "auto"
+      }}
+    >
 
-      <Typography variant="h6" mb={2} fontWeight="bold">
-
+      <Typography
+        variant="h6"
+        mb={2}
+        fontWeight="bold"
+      >
         Employee List
-
       </Typography>
 
-      <Box style={{ height: 450, width: "100%" }}>
+      <Box
+        sx={{
+          height: isMobile ? 420 : 450,
+          width: "100%",
+          minWidth: 600
+        }}
+      >
 
         <DataGrid
           rows={employees}

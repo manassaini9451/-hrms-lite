@@ -2,6 +2,19 @@ import React, { useState } from "react";
 
 import { getAttendance } from "../services/api";
 
+import {
+  Box,
+  Paper,
+  Typography,
+  TextField,
+  Button,
+  CircularProgress
+} from "@mui/material";
+
+import { DataGrid } from "@mui/x-data-grid";
+
+import { toast } from "react-toastify";
+
 function AttendanceList() {
 
   const [employeeId, setEmployeeId] = useState("");
@@ -10,13 +23,11 @@ function AttendanceList() {
 
   const [loading, setLoading] = useState(false);
 
-  const [error, setError] = useState("");
-
   const load = async () => {
 
     if (!employeeId) {
 
-      alert("Enter Employee ID");
+      toast.error("Enter Employee ID");
 
       return;
 
@@ -28,13 +39,17 @@ function AttendanceList() {
 
       const res = await getAttendance(employeeId);
 
-      setRecords(res.data);
+      const rows = res.data.map((rec) => ({
+        id: rec._id,
+        date: rec.date,
+        status: rec.status
+      }));
 
-      setError("");
+      setRecords(rows);
 
-    } catch (err) {
+    } catch {
 
-      setError("Attendance not found");
+      toast.error("Attendance not found");
 
     } finally {
 
@@ -44,69 +59,71 @@ function AttendanceList() {
 
   };
 
-  if (loading) return <p>Loading attendance...</p>;
+  const columns = [
+
+    {
+      field: "date",
+      headerName: "Date",
+      flex: 1,
+      sortable: true
+    },
+
+    {
+      field: "status",
+      headerName: "Status",
+      flex: 1,
+      sortable: true
+    }
+
+  ];
 
   return (
 
-    <div>
+    <Paper elevation={3} sx={{ padding: 4 }}>
 
-      <h3>Load Attendance</h3>
+      <Typography variant="h6" mb={3} fontWeight="bold">
 
-      <input
-        placeholder="Employee ID"
-        value={employeeId}
-        onChange={(e) =>
-          setEmployeeId(e.target.value)
-        }
-      />
+        Attendance Records
 
-      <button onClick={load}>
-        Load Attendance
-      </button>
+      </Typography>
 
-      {error && <p>{error}</p>}
+      <Box display="flex" gap={2} mb={3}>
 
-      {records.length === 0 && !error && (
-        <p>No attendance records</p>
-      )}
+        <TextField
+          label="Employee ID"
+          value={employeeId}
+          onChange={(e) => setEmployeeId(e.target.value)}
+        />
 
-      {records.length > 0 && (
+        <Button
+          variant="contained"
+          onClick={load}
+        >
+          Load
+        </Button>
 
-        <table border="1">
+      </Box>
 
-          <thead>
+      {loading ? (
 
-            <tr>
+        <CircularProgress />
 
-              <th>Date</th>
+      ) : (
 
-              <th>Status</th>
+        <div style={{ height: 400 }}>
 
-            </tr>
+          <DataGrid
+            rows={records}
+            columns={columns}
+            pageSize={5}
+            rowsPerPageOptions={[5, 10]}
+          />
 
-          </thead>
-
-          <tbody>
-
-            {records.map((rec) => (
-
-              <tr key={rec._id}>
-
-                <td>{rec.date}</td>
-
-                <td>{rec.status}</td>
-
-              </tr>
-
-            ))}
-
-          </tbody>
-
-        </table>
+        </div>
 
       )}
 
-    </div>
+    </Paper>
 
   );
 

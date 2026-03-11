@@ -3,11 +3,15 @@ import React, { useEffect, useState } from "react";
 import { getEmployees, deleteEmployee } from "../services/api";
 import { toast } from "react-toastify";
 
+import { Box, Paper, Typography, CircularProgress, IconButton } from "@mui/material";
+import { DataGrid } from "@mui/x-data-grid";
+
+import DeleteIcon from "@mui/icons-material/Delete";
+
 function EmployeeList({ refreshFlag }) {
 
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
   const loadEmployees = async () => {
 
@@ -17,16 +21,26 @@ function EmployeeList({ refreshFlag }) {
 
       const res = await getEmployees();
 
-      setEmployees(res.data);
+      const rows = res.data.map((emp) => ({
+        id: emp._id,
+        employeeId: emp.employeeId,
+        fullName: emp.fullName,
+        email: emp.email,
+        department: emp.department
+      }));
 
-    } catch (err) {
+      setEmployees(rows);
 
-      setError("Failed to load employees");
+    } catch (error) {
+
+      toast.error("Failed to load employees");
 
     } finally {
 
       setLoading(false);
+
     }
+
   };
 
   useEffect(() => {
@@ -37,69 +51,106 @@ function EmployeeList({ refreshFlag }) {
 
   const remove = async (id) => {
 
-    await deleteEmployee(id);
-    toast.success("Employee deleted");
+    if (!window.confirm("Delete this employee?")) return;
 
-    loadEmployees();
+    try {
+
+      await deleteEmployee(id);
+
+      toast.success("Employee deleted");
+
+      loadEmployees();
+
+    } catch {
+
+      toast.error("Delete failed");
+
+    }
+
   };
 
-  if (loading) return <p>Loading employees...</p>;
+  const columns = [
 
-  if (error) return <p>{error}</p>;
+    {
+      field: "employeeId",
+      headerName: "Employee ID",
+      flex: 1,
+      sortable: true
+    },
 
-  if (employees.length === 0)
-    return <p>No employees found</p>;
+    {
+      field: "fullName",
+      headerName: "Name",
+      flex: 1,
+      sortable: true
+    },
+
+    {
+      field: "email",
+      headerName: "Email",
+      flex: 1.5,
+      sortable: true
+    },
+
+    {
+      field: "department",
+      headerName: "Department",
+      flex: 1,
+      sortable: true
+    },
+
+    {
+      field: "action",
+      headerName: "Action",
+      sortable: false,
+      renderCell: (params) => (
+
+        <IconButton
+          color="error"
+          onClick={() => remove(params.row.id)}
+        >
+          <DeleteIcon />
+        </IconButton>
+
+      )
+    }
+
+  ];
+
+  if (loading)
+
+    return (
+      <Box textAlign="center" mt={4}>
+        <CircularProgress />
+      </Box>
+    );
 
   return (
 
-    <table border="1">
+    <Paper elevation={3} sx={{ padding: 3 }}>
 
-      <thead>
+      <Typography variant="h6" mb={2} fontWeight="bold">
 
-        <tr>
+        Employee List
 
-          <th>ID</th>
-          <th>Name</th>
-          <th>Email</th>
-          <th>Department</th>
-          <th>Action</th>
+      </Typography>
 
-        </tr>
+      <Box style={{ height: 450, width: "100%" }}>
 
-      </thead>
+        <DataGrid
+          rows={employees}
+          columns={columns}
+          pageSize={5}
+          rowsPerPageOptions={[5, 10]}
+          disableSelectionOnClick
+        />
 
-      <tbody>
+      </Box>
 
-        {employees.map((emp) => (
+    </Paper>
 
-          <tr key={emp._id}>
-
-            <td>{emp.employeeId}</td>
-
-            <td>{emp.fullName}</td>
-
-            <td>{emp.email}</td>
-
-            <td>{emp.department}</td>
-
-            <td>
-
-              <button
-                onClick={() => remove(emp._id)}
-              >
-                Delete
-              </button>
-
-            </td>
-
-          </tr>
-
-        ))}
-
-      </tbody>
-
-    </table>
   );
+
 }
 
 export default EmployeeList;
